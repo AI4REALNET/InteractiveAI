@@ -160,10 +160,6 @@ def edit_simulation_settings():
     session['message'].append("La simulation est chargée.")
     return redirect(url_for('dashboard'))
 
-
-socketio.start_background_task(simu.run_simulator, com)
-
-
 @app.route('/start_simulation', methods=['GET'])
 def start_simulation():
     """Start the simulation."""
@@ -230,4 +226,4 @@ def send_act():
 
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, allow_unsafe_werkzeug=True, host='0.0.0.0', port=5000)
+    socketio.run(app, debug=True, allow_unsafe_werkzeug=True, host='0.0.0.0', port=5150)

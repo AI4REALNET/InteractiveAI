@@ -141,6 +141,7 @@ ENV/
 env.bak/
 venv.bak/
 PowerGrid_venv/
+venv_grid2op/
 
 # Spyder project settings
 .spyderproject

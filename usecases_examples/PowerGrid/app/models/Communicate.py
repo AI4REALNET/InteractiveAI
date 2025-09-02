@@ -492,6 +492,7 @@ class Communicate:
             step_duration: Duration of a simulation step.
             context_date: Current context date.
         """
+        keys_to_delete = []
         for key in list(self.list_of_issues.keys()):
             value = self.list_of_issues[key]
             if datetime.strptime(value["end_date"], "%Y-%m-%d %H:%M:%S.%f%z") < context_date:
@@ -524,8 +525,11 @@ class Communicate:
                         "The ending event has not been sent : the connexion with InteractiveAI failed \n"
                     )
 
-                # Use del to remove the item from the dictionary
-                del self.list_of_issues[key]
+                keys_to_delete.append(key)
+
+        # Use del to remove the item from the dictionary
+        for key in keys_to_delete:
+            del self.list_of_issues[key]
 
     def get_act_from_api(self):
         """

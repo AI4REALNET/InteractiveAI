@@ -1,8 +1,8 @@
 import time
 from datetime import datetime, timedelta, timezone
 import grid2op
-from grid2op.Chronics.handlers import PerfectForecastHandler, CSVHandler
-from grid2op.Agent import recoPowerlineAgent
+from grid2op.Chronics.handlers import PerfectForecastHandler, CSVHandler, DoNothingHandler
+from grid2op.Agent import recoPowerlineAgent, AlertAgent
 from grid2op.Chronics import FromHandlers
 from lightsim2grid import LightSimBackend
 import numpy as np
@@ -76,7 +76,7 @@ class Simulator:
                                     "gridvalueClass": FromHandlers,
                                     "gen_p_handler": CSVHandler("prod_p"),
                                     "load_p_handler": CSVHandler("load_p"),
-                                    "gen_v_handler": CSVHandler("prod_v"),
+                                    "gen_v_handler": DoNothingHandler("prod_v"),
                                     "load_q_handler": CSVHandler("load_q"),
                                     "h_forecast": forecasts_horizons,
                                     "gen_p_for_handler": PerfectForecastHandler(
@@ -94,10 +94,12 @@ class Simulator:
                     self.env.chronics_handler.get_name())
         session['message'].append(f"Le scénario chargé est : {self.env.chronics_handler.get_name()}")
 
-        assistant_path = self.config['assistant_path']
-        assistant_seed = int(self.config['assistant_seed'])
-        self.local_assistant = load_assistant(
-            assistant_path, assistant_seed, self.env)
+        if self.config.get("assistant_path", "") != "" :
+            assistant_path = self.config['assistant_path']
+            assistant_seed = int(self.config['assistant_seed'])
+            self.local_assistant = load_assistant(assistant_path, assistant_seed, self.env)
+        else:
+            self.local_assistant = AlertAgent(self.env.action_space)
 
         self.agent_reco = recoPowerlineAgent.RecoPowerlineAgent(
             self.env.action_space)
@@ -113,7 +115,7 @@ class Simulator:
         logging.info("Le scénario est chargé.\n")
         session['message'].append("Le scénario est chargé.")
         self.listen = Listener(self.obs)
-        return act
+        self.act = act
 
     def run_simulator(self, com):
         """
@@ -138,6 +140,7 @@ class Simulator:
         silent_mode_msg_trigger = True
         step_counter = 0
         clear_parade_flag = False
+        act = self.act
 
         while not done:
             context_date = date + timedelta(minutes=float(5))*step_counter
@@ -146,9 +149,9 @@ class Simulator:
 
             # Pour corriger la valeur de act à certain pas précis
             # en vue d'avoir notre scénario cible
-            act_fixed, _ = targeted_scenario_act_fixed(self.env, self.obs)
-            if act_fixed is not None:
-                act = act_fixed
+            # act_fixed, _ = targeted_scenario_act_fixed(self.env, self.obs)
+            # if act_fixed is not None:
+            #     act = act_fixed
 
             # Begining of steps : Observation updates
             self.obs, _, done, _ = self.env.step(act)
@@ -248,13 +251,12 @@ class Simulator:
             if self.listen.stop_for_issue_state(self.obs,
                                                 obs_forecast,
                                                 f_env,
-                                                self.env._opponent._lines_ids):
+                                                [line_id for opponent in self.env._opponent.list_opponents for line_id in opponent._lines_ids]):
                 # logging.info("An alarm is raised")
 
                 # -------------------------------------------------------------------
                 if "Overload" in self.listen.current_issues:
                     if self.obs.current_step >= self.config['scenario_first_step']:
-
                         com.push_step = self.obs.current_step + send_tempo
                         if com.cab_api_on is True and context_just_sent is False:
                             if not img_b64_current:
@@ -294,10 +296,10 @@ class Simulator:
                                               line_name=get_curent_lines_in_bad_kpi(
                                                   self.obs),
                                               case_overload=True)
-                    if (self.obs.current_step < self.config['scenario_first_step']) or \
-                            (com.cab_api_on is False):
+                    if (self.obs.current_step < self.config['scenario_first_step']) or (com.cab_api_on is False):
                         # Utiliser XD_Silly en cache (en local)
-                        act = local_xd_silly(self.obs, self.local_assistant)
+                        # act = local_xd_silly(self.obs, self.local_assistant)
+                        act = self.local_assistant.act(self.obs, 0)
                         if com.cab_api_on is False:
                             logging.info("Parade : %s", act)
                             parade_message = {
