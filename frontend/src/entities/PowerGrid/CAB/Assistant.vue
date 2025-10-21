@@ -21,7 +21,7 @@
         <template #default="{ recommendation, index }">
           <div class="flex">
             <main>
-              <h2>P{{ index }}: {{ recommendation.title }}</h2>
+              <h2>R{{ index }}: {{ recommendation.title }}</h2>
             </main>
           </div>
         </template>
@@ -38,7 +38,7 @@
                     v-for="(recommendation, index) of recommendations"
                     :key="recommendation.title"
                     :class="{ active: selected?.title === recommendation.title }">
-                    P{{ index }}
+                    R{{ index }}
                   </th>
                 </tr>
               </thead>
