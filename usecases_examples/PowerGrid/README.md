@@ -102,7 +102,8 @@ The SERVER_ADDRESS will be the one of the computer used to launch the Docker com
 
 ### Configurate the simulator settings
 * Define your simulation configuration in the file: [`/InteractiveAI/usecases_examples/PowerGrid/config/CONFIG.toml`](/usecases_examples/PowerGrid/config/CONFIG.toml)
-* Define InteractiveAI connection settings in the file: [`/InteractiveAI/usecases_examples/PowerGrid/config/API_POWERGRID_CAB.toml`](/usecases_examples/PowerGrid/config/API_POWERGRID_CAB.toml)
+* Define InteractiveAI connection settings [Connexion] in the file: [`/InteractiveAI/usecases_examples/PowerGrid/config/API_POWERGRID_CAB.toml`](/usecases_examples/PowerGrid/config/API_POWERGRID_CAB.toml)
+* Define API simulator connection settings [Inputs.Act] in the file: [`/InteractiveAI/usecases_examples/PowerGrid/config/API_POWERGRID_CAB.toml`](/usecases_examples/PowerGrid/config/API_POWERGRID_CAB.toml)
 
 ### Run the simulator in your terminal
 ```commandline
@@ -112,6 +113,9 @@ python PowerGrid_poc_simulator_consol.py
 
 ## 2.2 CASE 2 : Web App Simulator
 
+### Configurate the simulator settings
+* Define API simulator connection settings [Inputs.Act] in the file: [`/InteractiveAI/usecases_examples/PowerGrid/config/API_POWERGRID_CAB.toml`](/usecases_examples/PowerGrid/config/API_POWERGRID_CAB.toml)
+  
 ### To launch the simulator app (BEST APPROACH)
 Open a web browser and navigate to the URL returned by Docker after running the containers. 
 This URL will typically be `http://localhost:5100/` unless you've configured a different port.
