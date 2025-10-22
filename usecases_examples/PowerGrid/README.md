@@ -48,6 +48,12 @@ python3 -m venv venv_grid2op
 ```
 
 ### Enter the virtual environment
+- On Linux based systems:
+```commandline
+source venv_grid2op/scripts/activate
+```
+
+- On Windows based systems:
 ```commandline
 source venv_grid2op/scripts/activate
 ```
