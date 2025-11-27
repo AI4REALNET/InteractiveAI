@@ -17,5 +17,5 @@
   "PowerGrid.kpis.redispatching_volume": "Redispatch volume",
   "PowerGrid.kpis.renewable_energy_share": "Proportion of renewable",
   "PowerGrid.kpis.total_consumption": "Total consumption",
-  "PowerGrid.kpis.type": "Type of parade"
+  "PowerGrid.kpis.type_of_the_reco": "Type of recommendation"
 }
