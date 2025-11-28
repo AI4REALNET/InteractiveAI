@@ -267,7 +267,7 @@ class Communicate:
         """Initialize the Communicate class for handling InteractiveAI API communication."""
         logging.info("COMMUNICATIONS' SETUP FOR THIS SESSION : \n")
         try:
-            self.outputsConfig = toml.load("API_POWERGRID_CAB.toml")
+            self.outputsConfig = toml.load("config/API_POWERGRID_CAB.toml")
             if self.outputsConfig['Outputs']['activate'] == 'yes':
                 self.CAB_API_on = True
             else:
@@ -581,8 +581,8 @@ class Communicate:
                 payload_dict = {}
                 payload_dict = {
                     "criticality": "ROUTINE",
-                    "title": f"Ligne {line_name} déconnectée",
-                    "description": f"La ligne {line_name} est déconnectée",
+                    "title": f"Line {line_name} disconnected",
+                    "description": f"Line {line_name} is disconnected",
                     "start_date": f"{context_date}",
                     "end_date": f"{context_date + timedelta(minutes=float(5))}",
                     "data": {
@@ -961,7 +961,7 @@ def run_simulator():
 
     try:
         # Load simulation configuration
-        config = toml.load("CONFIG.toml")
+        config = toml.load("config/CONFIG.toml")
 
         forecasts_horizons = [5, 10, 15, 20, 25, 30]
 
