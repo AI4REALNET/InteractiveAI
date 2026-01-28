@@ -33,45 +33,97 @@ token =  token_type + ' ' + access_token
 
 
 event_payload1 = json.dumps({
-  "criticality": "HIGH",
-  "title": "06 78 83 09 89",
-  "description": "Feu",
-  "data": {
-    "call_id": "1",
-    "urgence": "LOW",
-    "numero_number": "06 78 83 09 89",
-  },
-  "use_case": "Railway",
-  "is_active": False,
+"criticality": "HIGH", #MEDIUM or LOW
+                    "title": "fake_title",
+                    "description": "fake_descp",
+                    "data": {
+                        #"simulation_name" : None,
+                        "event_type": "PASSENGER", #INFRASTRUCTURE or IMPACT or HARDWARE
+                        "id_train": "1234",
+                        "agent_id": "1",
+                        "delay": "1 hour"
+                        #"num_rame": None,
+                        #"tmp_rame": None,
+                        #"agent_position": None,
+                        #"malfunction_stop_position": None,
+                        #"travel_plan": None,
+                    },
+                    #"start_date": iso_date,
+                    #"end_date": iso_date,
+                    "use_case": "Railway"
 }
 )
+
+
+# event_data = {
+#                     "criticality": "HIGH", #MEDIUM or LOW
+#                     "title": "fake_itle"",
+#                     "description": "fake_descp",
+#                     "data": {
+#                         #"simulation_name" : None,
+#                         "event_type": "PASSENGER", #INFRASTRUCTURE or IMPACT or HARDWARE
+#                         "id_train": "1234",
+#                         #"agent_id": None,
+#                         #"num_rame": None,
+#                         #"tmp_rame": None,
+#                         #"agent_position": None,
+#                         #"malfunction_stop_position": None,
+#                         #"travel_plan": None,
+#                     },
+#                     "start_date": iso_date,
+#                     "end_date": iso_date,
+#                     "use_case": "Railway"
+#                 }
+
 
 
 
 context_payload1 = json.dumps({
-    "data" : {
-        "FillForm": {
-        "FirstName":"Chloé",
-        "LastName": "DESCHAMPS",
-        "PhoneNumber": "06 78 89 90 91",
-        "Address": "Rue Saint-Exupéry, 18520 Avord ",
-        "AccessMean": "Rocade sortie 34" ,
-        "CallNature": "ACCIDENT DE LA ROUTE",
-        "AdviceCallNature2": "ACCIDENT DE LA ROUTE",
-        "AdviceCallNature3": "BLESSURE GRAVE",
-        "AggravationRisk": "  Explosion avec l'essence",
-        "Observations": "Deux véhicules impliqués, choc frontal",
-        "SMURQuantity": 2,
-        "FirefighterQuantity":1,
-        "AdviceSMUR2":1,
-        "AdviceFirefighter2":2,
-        "AdviceSMUR3":3,
-        "AdviceFirefighter3":0
-        }
-    },
-    "use_case": "Railway"
+"data": {
+                "trains": { # peut mettre plusieurs trains
+                        "id_train": "1234",
+                        #"nb_passengers_onboard": None,
+                        #"nb_passengers_connection": None,
+                        #"latitude": latitude,
+                        #"longitude": longitude,
+                        #"speed": None,
+                        "failure": "FALSE"
+                }
+                #"list_of_target": None,
+                #"direction_agents": None,
+                #"position_agents": None,
+            },
+            #"date": iso_date,
+            "use_case": "Railway",
 }
 )
+
+
+# context_data = {
+#             "data": {
+#                 "trains": { # peut mettre plusieurs trains
+#                         "id_train": "1234",
+#                         #"nb_passengers_onboard": None,
+#                         #"nb_passengers_connection": None,
+#                         "latitude": latitude,
+#                         "longitude": longitude,
+#                         #"speed": None,
+#                         "failure": FALSE
+#                 }
+#                 #"list_of_target": None,
+#                 #"direction_agents": None,
+#                 #"position_agents": None,
+#             },
+#             "date": iso_date,
+#             "use_case": "Railway",
+#         }
+
+
+
+
+
+
+
 
 event_headers = {
             'Authorization': token,
