@@ -157,3 +157,50 @@ def SNCF_RECO(pairs):
 
 
 #test = 1
+
+
+
+
+def SNCF_RECO1(pairs):
+    """
+    pairs: list of (context_json, event_json) tuples, in chronological order
+    Returns: list of dictionaries with train_id, event_title, and ordered recommendations
+    """
+    
+    # Predefined recommendations mapped to train_id + event_type
+    predefined_recos = {
+        ("AB001", "PASSENGER"): [Reco11, Reco12, Reco13, Reco14],
+        ("AB001", "INFRASTRUCTURE"):  [Reco21, Reco22, Reco23, Reco24],
+        ("EF004", "INFRASTRUCTURE"): [Reco31, Reco32, Reco33, Reco34],
+    }
+    
+    all_results = []
+    
+    for context_json, event_json in pairs:
+        context = json.loads(context_json)
+        event = json.loads(event_json)
+        
+        train_id = event["data"]["id_train"]
+        event_type = event["data"]["event_type"]
+        
+        key = (train_id, event_type)
+        recos = predefined_recos.get(key, [{"data": {"title": "Aucune recommandation disponible"}}])
+        
+        # Sort so that the "best" recommendation appears first
+        def best_first(reco_json):
+            reco = json.loads(reco_json)
+            return 0 if reco["data"]["kpis"].get("best") == "True" else 1
+        
+        ordered_recos = sorted(recos, key=best_first)
+        
+        all_results.append({
+            "train_id": train_id,
+            "event_title": event.get("title"),
+            "event_start": event.get("start_date"),
+            "recommendations": ordered_recos
+        })
+    
+    # Optional: sort all_results chronologically by event_start
+    all_results.sort(key=lambda x: datetime.fromisoformat(x["event_start"]) if x["event_start"] else datetime.min)
+    
+    return all_results
