@@ -275,3 +275,40 @@ def SNCF_RECO2(event_payload, context_payload):
     )
 
     return sorted_recos
+
+
+
+
+def SNCF_RECO3(event_json, context_json, recommendation_catalog):
+    """
+    Selects recommendations using IF–THEN rules based on event_id.
+    
+    Input:
+        event_json (str)   : Event payload in JSON string format
+        context_json (str) : Context payload (not used in rules but kept for extensibility)
+    
+    Output:
+        List of 4 recommendation JSON strings ordered with best=True first
+    """
+
+    event = json.loads(event_json)
+    context = json.loads(context_json)  # Currently unused but available if rules expand
+    
+    event_id = event["data"].get("event_id")
+
+    if event_id not in recommendation_catalog:
+            return [{"error": f"No recommendations defined for event_id {event_id}"}]
+
+    recos = recommendation_catalog[event_id]
+
+    # ------------- ORDER: BEST FIRST ----------------- #
+    def best_first(reco_json):
+        reco = json.loads(reco_json)
+        return 0 if reco["data"]["kpis"].get("best") == "True" else 1
+
+    ordered_recommendations = sorted(recos, key=best_first)
+
+    return ordered_recommendations
+
+
+
