@@ -294,12 +294,12 @@ def SNCF_RECO3(event_json, context_json, recommendation_catalog):
     event = json.loads(event_json)
     context = json.loads(context_json)  # Currently unused but available if rules expand
     
-    event_id = event["data"].get("event_id")
+    id_event = event["data"].get("id_event")
 
-    if event_id not in recommendation_catalog:
-            return [{"error": f"No recommendations defined for event_id {event_id}"}]
+    if id_event not in recommendation_catalog:
+            return [{"error": f"No recommendations defined for event_id {id_event}"}]
 
-    recos = recommendation_catalog[event_id]
+    recos = recommendation_catalog[id_event]
 
     # ------------- ORDER: BEST FIRST ----------------- #
     def best_first(reco_json):

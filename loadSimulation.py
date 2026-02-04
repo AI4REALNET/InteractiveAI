@@ -7,7 +7,8 @@ from datetime import datetime, timedelta
 
 print("test")
 
-username = "railway_user"
+# username = "railway_user"
+username = "publisher_test"
 password = "test"
 
 # server_url = "192.168.210.29"
@@ -124,15 +125,15 @@ start_date = datetime.now() + timedelta(seconds=10)
 
 event_payload1 = json.dumps({
 "criticality": "HIGH", #MEDIUM or LOW
-                    "title": "Malaise Voyageurs, Dérangement d'installation, Gare de Poitiers",
-                    "description": "Malaise Voyageurs au TGV AB001. Intervention des pompiers en gare de Poitiers. Au même moment, dérangement d'installation à Poitiers accès impossible. Heure de restitution prévisible: 12h00." ,
+                    "title": "Passenger taken ill in Poitiers",
+                    "description": "Passenger taken ill in TGV AB001. emergency services intervention in the Poitiers station. Impossible to access the Poitiers station. Estimated time of service traffic resumption : 12:00." ,
                     "data": {
                         #"simulation_name" : None,
-                        #"event_id":"1",
+                        "id_event": "1",
                         "event_type": "PASSENGER", #INFRASTRUCTURE or IMPACT or HARDWARE
                         "id_train": "AB001",
                         "agent_id": "1",
-                        #"delay": "5 hour",
+                        "delay": 0,
                         #"proba": "0.4"
                     },
                     "start_date": (start_date).isoformat(),
@@ -144,17 +145,17 @@ event_payload1 = json.dumps({
 
 context_payload1 = json.dumps({
 "data": {
-                "trains": { # peut mettre plusieurs trains
+                "trains":[{ # peut mettre plusieurs trains
                         "id_train": "AB001",
-                        "nb_passengers_onboard": "468",
-                        "trajet" : "Paris/Bordeaux",
-                        "arrets":"Poitiers/Bordeaux",
-                        #"nb_passengers_connection": None,
-                        "latitude": "46.583328",
-                        "longitude": "0.33333",
+                        "nb_passengers_onboard": 468,
+                        "trip" : "Paris/Bordeaux",
+                        "stops":"Poitiers/Bordeaux",
+                        #"nb_passengers_connection": 0,
+                        "latitude": 46.583328,
+                        "longitude": 0.33333,
                         #"speed": None,
-                        "failure": "TRUE"
-                }
+                        "failure": True
+                }]
         },  
 "use_case": "Railway"     
 }         
@@ -162,19 +163,42 @@ context_payload1 = json.dumps({
 
 
 
+
+# context_payload1 = json.dumps({
+# "data": {
+#                 "trains": { # peut mettre plusieurs trains
+#                         "id_train": "1234",
+#                         #"nb_passengers_onboard": None,
+#                         #"nb_passengers_connection": None,
+#                         #"latitude": latitude,
+#                         #"longitude": longitude,
+#                         #"speed": None,
+#                         "failure": "FALSE"
+#                 }
+#                 #"list_of_target": None,
+#                 #"direction_agents": None,
+#                 #"position_agents": None,
+#             },
+#             #"date": iso_date,
+#             "use_case": "Railway",
+# }
+# )
+
+
+
 event_payload2 = json.dumps({
-#"criticality": "HIGH", #MEDIUM or LOW
-                    "title": "Caténaire arrachée ",
-                    "description": "Le TGV CD001 a arraché la caténaire au niveau du poste 60 de Pliboux sur la LGV SEA. La voie est contigüe n'est pas accessible. Les trains sont détournés par la ligne classique entre Poitiers et  Angoulême. Heure de restitution prévisible d'une voie : 23h00.",
+"criticality": "HIGH", #MEDIUM or LOW
+                    "title": "Broken overhead wire",
+                    "description": "Broken overhead wire for TGV CD001 in the Pliboux plant on line LGV SEA. The adjacent track is not accessible. Trains are rerouted to the standard line between Poitiers and Angoulême. Estimated time of service traffic resumption : 23:00",
                     "data": {
                         #"simulation_name" : None,
-                        #"event_id":"2",
+                        "id_event":"2",
                         "event_type": "INFRASTRUCTURE", #INFRASTRUCTURE or IMPACT or HARDWARE
                        "id_train": "AB001",
                         "latitude": "46.167",
                         "longitude": "0.127",
                         "agent_id": "1",
-                        #"delay": "5 hour",
+                        "delay":  0,
                         #"proba": "0.4"
                     },
                     "start_date": (start_date + timedelta(seconds=30)).isoformat(),
@@ -186,17 +210,17 @@ event_payload2 = json.dumps({
 
 context_payload2 = json.dumps({
 "data": {
-                "trains": { # peut mettre plusieurs trains
+                "trains": [{ # peut mettre plusieurs trains
                         "id_train": "AB001",
                         "nb_passengers_onboard": "459",
-                        "trajet" : "Paris/Bordeaux",
-                        "arrets":"Angoulême/Bordeaux",
+                        "trip" : "Paris/Bordeaux",
+                        "stops":"Angoulême/Bordeaux",
                         #"nb_passengers_connection": None,
                         #"latitude": latitude,
                         #"longitude": longitude,
                         #"speed": None,
-                        "failure": "FALSE"
-                }
+                        "failure": False
+                }]
         },  
 "use_case": "Railway"     
 }
@@ -205,17 +229,17 @@ context_payload2 = json.dumps({
 
 event_payload3 = json.dumps({
 "criticality": "HIGH", #MEDIUM or LOW
-                    "title": "Fuite de gaz de ville",
-                    "description": "Fuite de gaz au niveau de Bassens. La plateforme ferroviaire se retrouve dans le périmètre de sécurité. Les autorités décident d'interdir la circulation. Heure de restitution prévisible : 19h00.",
+                    "title": "Gas leak",
+                    "description": "Gas leak in the city of Bassens. The railway facility is in the scurity perimeter. Circulation is forbidden by authorities. Estimated time of traffic resumption : 19:00.",
                     "data": {
                         #"simulation_name" : None,
                         "event_type": "INFRASTRUCTURE", #INFRASTRUCTURE or IMPACT or HARDWARE
-                        #"event_id":"3",
+                        "id_event":"3",
                         "id_train": "EF004",
                         "latitude" : "44.900002",
                         "longitude" : "-0.51667 ",
                         "agent_id" : "1",
-                        #"delay": "5 hour",
+                        "delay": 0,
                         #"proba": "0.4"
                     },
                     "start_date": (start_date + timedelta(seconds=40)).isoformat(),
@@ -226,17 +250,17 @@ event_payload3 = json.dumps({
 
 context_payload3 = json.dumps({
 "data": {
-                "trains": { # peut mettre plusieurs trains
+                "trains": [{ # peut mettre plusieurs trains
                         "id_train": "EF004",
                         "nb_passengers_onboard": "348",
-                        "trajet" : "Bordeaux / Paris",
-                        "arrets":"Bordeaux / Libourne/ Angoulême / Poitiers / Chatellerault",
+                        "trip" : "Bordeaux / Paris",
+                        "stops":"Bordeaux / Libourne/ Angoulême / Poitiers / Chatellerault",
                         #"nb_passengers_connection": None,
                         #"latitude": latitude,
                         #"longitude": longitude,
                         #"speed": None,
-                        "failure": "FALSE"
-                }
+                        "failure": False
+                }]
         },  
 "use_case": "Railway"     
 }
@@ -249,10 +273,31 @@ event_headers = {
         }
 # Les contexts
 
-response1 = requests.request('POST', context_url, headers=event_headers, data=context_payload1)
-response2 = requests.request('POST', events_url, headers=event_headers, data=event_payload1)
 
-print("Context status:", response1.status_code, response1.text)
-print("Event status:", response2.status_code, response2.text)
+sleep(10)
+response11 = requests.request('POST', context_url, headers=event_headers, data=context_payload1)
+response12 = requests.request('POST', events_url, headers=event_headers, data=event_payload1)
+
+print("Context status:", response11.status_code, response11.text)
+print("Event status:", response12.status_code, response12.text)
 
 
+
+
+sleep(10)
+
+response21 = requests.request('POST', context_url, headers=event_headers, data=context_payload2)
+response22 = requests.request('POST', events_url, headers=event_headers, data=event_payload2)
+
+print("Context status:", response21.status_code, response21.text)
+print("Event status:", response22.status_code, response22.text)
+
+
+
+sleep(5)
+
+response31 = requests.request('POST', context_url, headers=event_headers, data=context_payload3)
+response32 = requests.request('POST', events_url, headers=event_headers, data=event_payload3)
+
+print("Context status:", response31.status_code, response31.text)
+print("Event status:", response32.status_code, response32.text)
