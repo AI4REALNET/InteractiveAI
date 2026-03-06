@@ -13,6 +13,7 @@ password = "test"
 
 # server_url = "192.168.210.29"
 server_url = "192.168.209.192"
+#server_url = "192.168.209.192:3200"
 
 client_id = "opfab-client"
 token_url = f"http://{server_url}:3200/auth/token"
