@@ -241,6 +241,24 @@ function feedbackLabel(data: unknown): string {
   return escapeHtml(action) + (rec ? ' — ' + escapeHtml(rec) : '')
 }
 
+/** Max character length for a single value rendered in the HTML summary. */
+const MAX_VALUE_LENGTH = 200
+
+/** Return a safe, human-readable representation of a value, truncating if too large. */
+function safeValue(val: unknown): string {
+  if (val === null || val === undefined) return ''
+  const str = typeof val === 'string' ? val : JSON.stringify(val)
+  if (str.length <= MAX_VALUE_LENGTH) return str
+  return str.slice(0, MAX_VALUE_LENGTH) + '\u2026 [truncated]'
+}
+
+/** Returns true when a value looks like encrypted / binary blob data. */
+function isLargeBlob(val: unknown): boolean {
+  if (val === null || val === undefined) return false
+  const str = typeof val === 'string' ? val : JSON.stringify(val)
+  return str.length > MAX_VALUE_LENGTH
+}
+
 function eventMetadataHtml(data: unknown): string {
   if (!data || typeof data !== 'object') return ''
   const d = data as Record<string, unknown>
@@ -249,7 +267,12 @@ function eventMetadataHtml(data: unknown): string {
   const rows: string[] = []
   const keys = Object.keys(meta)
   for (let i = 0; i < keys.length; i++) {
-    rows.push('<tr><td style="padding:2px 10px 2px 0;color:#6b7280;font-size:13px">' + escapeHtml(keys[i]) + '</td><td style="font-size:13px">' + escapeHtml(String(meta[keys[i]])) + '</td></tr>')
+    const val = meta[keys[i]]
+    if (isLargeBlob(val)) {
+      rows.push('<tr><td style="padding:2px 10px 2px 0;color:#6b7280;font-size:13px">' + escapeHtml(keys[i]) + '</td><td style="font-size:13px;color:#9ca3af;font-style:italic">[large data omitted]</td></tr>')
+    } else {
+      rows.push('<tr><td style="padding:2px 10px 2px 0;color:#6b7280;font-size:13px">' + escapeHtml(keys[i]) + '</td><td style="font-size:13px">' + escapeHtml(safeValue(val)) + '</td></tr>')
+    }
   }
   return '<table style="margin:4px 0 0 16px">' + rows.join('') + '</table>'
 }
@@ -261,13 +284,15 @@ function awardHtml(trace: StoredTrace): string {
   const desc = typeof d.description === 'string' ? d.description : ''
   const kpis = d.kpis as Record<string, unknown> | undefined
   let html = '<div style="margin:6px 0 6px 16px;padding:8px 12px;background:#ecfdf5;border-left:3px solid #059669;border-radius:4px">'
-  html += '<strong style="color:#059669">' + escapeHtml(title) + '</strong>'
-  if (desc) html += '<div style="font-size:13px;color:#374151;margin-top:2px">' + escapeHtml(desc) + '</div>'
+  html += '<strong style="color:#059669">' + escapeHtml(safeValue(title)) + '</strong>'
+  if (desc) html += '<div style="font-size:13px;color:#374151;margin-top:2px">' + escapeHtml(safeValue(desc)) + '</div>'
   if (kpis) {
     html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px">'
     const kpiKeys = Object.keys(kpis)
     for (let i = 0; i < kpiKeys.length; i++) {
-      html += '<span style="font-size:12px;background:#d1fae5;padding:2px 6px;border-radius:3px"><b>' + escapeHtml(kpiKeys[i]) + ':</b> ' + escapeHtml(String(kpis[kpiKeys[i]])) + '</span>'
+      const kpiVal = kpis[kpiKeys[i]]
+      if (isLargeBlob(kpiVal)) continue // skip encrypted / oversized KPI values
+      html += '<span style="font-size:12px;background:#d1fae5;padding:2px 6px;border-radius:3px"><b>' + escapeHtml(kpiKeys[i]) + ':</b> ' + escapeHtml(safeValue(kpiVal)) + '</span>'
     }
     html += '</div>'
   }
@@ -321,7 +346,7 @@ function buildHtmlSummary(
   html += '<div class="kpi-box"><div class="value">' + String(events.length) + '</div><div class="label">Events Handled</div></div>'
 
   const resolved = events.filter(function (e) { return e.decision_time_ms !== null })
-  html += '<div class="kpi-box"><div class="value">' + resolved.length + ' / ' + events.length + '</div><div class="label">Events Resolved (with AWARD)</div></div>'
+  html += '<div class="kpi-box"><div class="value">' + resolved.length + ' / ' + events.length + '</div><div class="label">Assistance relevance</div></div>'
   html += '<div class="kpi-box"><div class="value">' + formatMs(kpis.avg_decision_time_ms) + '</div><div class="label">Avg Decision Time (across all events)</div></div>'
   html += '</div>'
 
@@ -333,12 +358,16 @@ function buildHtmlSummary(
     const meta = (d?.metadata ?? {}) as Record<string, unknown>
     const eventType = typeof meta.event_type === 'string' ? meta.event_type : 'Unknown'
     const eventId = typeof meta.id_event === 'string' ? meta.id_event : String(meta.id_event ?? '')
+    const eventTitle = typeof d?.title === 'string' ? d.title : ''
+    const eventSummary = typeof d?.summary === 'string' ? d.summary : ''
 
     html += '<div class="card">'
     html += '<h3>' + stepBadge('EVENT') + ' Event #' + (ei + 1)
     if (eventId) html += ' <span class="tag">ID: ' + escapeHtml(eventId) + '</span>'
     html += ' <span class="tag">' + escapeHtml(eventType) + '</span>'
     html += '</h3>'
+    if (eventTitle) html += '<div style="font-size:15px;font-weight:600;margin:4px 0">' + escapeHtml(eventTitle) + '</div>'
+    if (eventSummary) html += '<div style="font-size:13px;color:#6b7280;margin-bottom:4px">' + escapeHtml(eventSummary) + '</div>'
     html += '<div class="time">' + formatTime(evt.date) + '</div>'
     html += eventMetadataHtml(evt.data)
 
@@ -403,6 +432,17 @@ export function recordTraceForSession(
   const session = loadSession() ?? createSession()
 
   if (trace.step === 'EVENT') {
+    // Skip pre-existing cards from the initial SSE sync.
+    // Compare publishDate (real wall-clock time) against session start.
+    // start_date is simulation time and can be in the future, so it's not reliable.
+    const traceData = trace.data as Record<string, unknown> | undefined
+    const pubDate = traceData?.publish_date as string | undefined
+    if (pubDate) {
+      const cardPublishTime = new Date(pubDate).getTime()
+      const sessionTime = new Date(session.startedAt).getTime()
+      if (cardPublishTime < sessionTime) return
+    }
+
     const key = eventKey(trace.data)
     if (key) {
       const alreadyRecorded = session.traces.some(
