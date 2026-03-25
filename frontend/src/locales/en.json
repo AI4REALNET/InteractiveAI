@@ -12,7 +12,7 @@
   "cab": "InteractiveAI",
   "cab.assistant": "Assistant",
   "cab.assistant.correlations": "Correlations",
-  "cab.assistant.procedure": "Procedure monitoring",
+  "cab.assistant.procedure": "Recommendations",
   "cab.assistant.procedure.collaborate": "Collaborate with {cab}",
   "cab.assistant.recommendations": "Recommendations",
   "cab.context.notification.expanded.false": "Open notification",

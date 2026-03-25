@@ -7,6 +7,7 @@ import eventBus from '@/plugins/eventBus'
 import i18n from '@/plugins/i18n'
 import { type Card, type CardEvent, CardOperationType } from '@/types/cards'
 import { type Entity } from '@/types/entities'
+import { recordTraceForSession } from '@/utils/traceSessionExport'
 import { uuid } from '@/utils/utils'
 
 import { useAppStore } from './app'
@@ -70,6 +71,23 @@ export const useCardsStore = defineStore('cards', () => {
       switch (cardEvent.type) {
         case CardOperationType.ADD:
         case CardOperationType.UPDATE:
+          if (cardEvent.type === CardOperationType.ADD || existingCard === -1) {
+            try {
+              recordTraceForSession({
+                use_case: entity,
+                step: 'EVENT',
+                data: {
+                  card_id: cardEvent.card.id,
+                  process_instance_id: cardEvent.card.processInstanceId,
+                  start_date: new Date(cardEvent.card.startDate).toISOString(),
+                  metadata: cardEvent.card.data.metadata
+                },
+                date: new Date().toISOString()
+              })
+            } catch (error) {
+              console.warn('Unable to record EVENT trace for session export:', error)
+            }
+          }
           // eslint-disable-next-line no-case-declarations
           let hydratedCard: Card<Entity> | undefined = undefined
           if (hydrated) {
