@@ -32,6 +32,8 @@ export function sendTrace(payload: Trace) {
           card_id: cardId,
           process_instance_id: card?.processInstanceId,
           start_date: card?.startDate ? new Date(card.startDate).toISOString() : undefined,
+          title: card?.titleTranslated || card?.title?.parameters?.title || '',
+          summary: card?.summaryTranslated || card?.summary?.parameters?.summary || '',
           metadata: card?.data.metadata
         },
         date: new Date().toISOString()
