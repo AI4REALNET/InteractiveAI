@@ -50,7 +50,10 @@ export function sendTrace(payload: Trace) {
 }
 
 export function applyRecommendation<E extends Entity = Entity>(data: Action<E>) {
-  return http.post<{ message: string }>('/api/v1/recommendations', data)
+  // [DISABLED] Simulator API is inactive — returning fake success for demo
+  // To restore: uncomment the http.post and remove the Promise.resolve
+  // return http.post<{ message: string }>('/api/v1/recommendations', data)
+  return Promise.resolve({ data: { message: 'ok (simulated)' } })
 }
 
 export function getProcedure(event_type: string) {
