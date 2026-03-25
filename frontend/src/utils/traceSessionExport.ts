@@ -193,6 +193,188 @@ function buildCsv(session: TraceSession, endedAt: string) {
   return [header.join(','), ...rows].join('\n')
 }
 
+function formatMs(ms: number | null): string {
+  if (ms === null) return '—'
+  if (ms < 1000) return ms + ' ms'
+  const totalSec = Math.round(ms / 1000)
+  const min = Math.floor(totalSec / 60)
+  const sec = totalSec % 60
+  return min > 0 ? min + 'm ' + sec + 's' : sec + 's'
+}
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+function formatTime(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString()
+  } catch {
+    return iso
+  }
+}
+
+function stepBadge(step: string): string {
+  const colors: Record<string, string> = {
+    EVENT: '#2563eb',
+    ASKFORHELP: '#d97706',
+    FEEDBACK: '#7c3aed',
+    AWARD: '#059669',
+    SOLUTION: '#0891b2'
+  }
+  const bg = colors[step] || '#6b7280'
+  return '<span style="display:inline-block;padding:2px 8px;border-radius:4px;color:#fff;font-size:12px;font-weight:600;background:' + bg + '">' + escapeHtml(step) + '</span>'
+}
+
+function feedbackLabel(data: unknown): string {
+  if (!data || typeof data !== 'object') return ''
+  const d = data as Record<string, unknown>
+  const action = typeof d.action === 'string' ? d.action : ''
+  const rec = typeof d.recommendation === 'string' ? d.recommendation : ''
+  if (action === 'confirm_recommendation') return '<span style="color:#059669">&#10003; Confirmed</span> — ' + escapeHtml(rec)
+  if (action === 'downvote_recommendation') return '<span style="color:#dc2626">&#10007; Downvoted</span> — ' + escapeHtml(rec)
+  if (action === 'dismiss_kpi') return '<span style="color:#6b7280">Dismissed KPI</span>'
+  return escapeHtml(action) + (rec ? ' — ' + escapeHtml(rec) : '')
+}
+
+function eventMetadataHtml(data: unknown): string {
+  if (!data || typeof data !== 'object') return ''
+  const d = data as Record<string, unknown>
+  const meta = d.metadata as Record<string, unknown> | undefined
+  if (!meta) return ''
+  const rows: string[] = []
+  const keys = Object.keys(meta)
+  for (let i = 0; i < keys.length; i++) {
+    rows.push('<tr><td style="padding:2px 10px 2px 0;color:#6b7280;font-size:13px">' + escapeHtml(keys[i]) + '</td><td style="font-size:13px">' + escapeHtml(String(meta[keys[i]])) + '</td></tr>')
+  }
+  return '<table style="margin:4px 0 0 16px">' + rows.join('') + '</table>'
+}
+
+function awardHtml(trace: StoredTrace): string {
+  const d = trace.data as Record<string, unknown> | undefined
+  if (!d) return ''
+  const title = typeof d.title === 'string' ? d.title : ''
+  const desc = typeof d.description === 'string' ? d.description : ''
+  const kpis = d.kpis as Record<string, unknown> | undefined
+  let html = '<div style="margin:6px 0 6px 16px;padding:8px 12px;background:#ecfdf5;border-left:3px solid #059669;border-radius:4px">'
+  html += '<strong style="color:#059669">' + escapeHtml(title) + '</strong>'
+  if (desc) html += '<div style="font-size:13px;color:#374151;margin-top:2px">' + escapeHtml(desc) + '</div>'
+  if (kpis) {
+    html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px">'
+    const kpiKeys = Object.keys(kpis)
+    for (let i = 0; i < kpiKeys.length; i++) {
+      html += '<span style="font-size:12px;background:#d1fae5;padding:2px 6px;border-radius:3px"><b>' + escapeHtml(kpiKeys[i]) + ':</b> ' + escapeHtml(String(kpis[kpiKeys[i]])) + '</span>'
+    }
+    html += '</div>'
+  }
+  html += '</div>'
+  return html
+}
+
+function buildHtmlSummary(
+  session: TraceSession,
+  endedAt: string,
+  structured: StructuredTrace[],
+  kpis: SessionKpis
+): string {
+  const events = structured.filter(isStructuredEvent)
+
+  // --- Session header ---
+  let html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+  html += '<title>Session Summary — ' + escapeHtml(session.userLogin ?? 'unknown') + '</title>'
+  html += '<style>'
+  html += 'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0;padding:24px;background:#f9fafb;color:#111827}'
+  html += '.card{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}'
+  html += '.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:16px 0}'
+  html += '.kpi-box{background:#f0f9ff;border:1px solid #bfdbfe;border-radius:6px;padding:12px;text-align:center}'
+  html += '.kpi-box .value{font-size:24px;font-weight:700;color:#1d4ed8}'
+  html += '.kpi-box .label{font-size:12px;color:#6b7280;margin-top:4px}'
+  html += '.timeline{border-left:2px solid #d1d5db;margin-left:12px;padding-left:16px}'
+  html += '.tl-item{position:relative;margin-bottom:10px;padding:4px 0}'
+  html += '.tl-item::before{content:"";position:absolute;left:-22px;top:8px;width:10px;height:10px;border-radius:50%;background:#d1d5db;border:2px solid #fff}'
+  html += '.tl-item.ask::before{background:#d97706}'
+  html += '.tl-item.feedback::before{background:#7c3aed}'
+  html += '.tl-item.award::before{background:#059669}'
+  html += '.time{font-size:11px;color:#9ca3af}'
+  html += 'h1{margin:0 0 4px 0;font-size:22px}'
+  html += 'h2{margin:24px 0 8px 0;font-size:18px;color:#374151}'
+  html += 'h3{margin:0 0 6px 0;font-size:15px}'
+  html += '.tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:12px;background:#e5e7eb;color:#374151;margin-right:4px}'
+  html += '.no-solution{color:#dc2626;font-style:italic;font-size:13px}'
+  html += '@media print{body{padding:12px}.card{box-shadow:none;break-inside:avoid}}'
+  html += '</style></head><body>'
+
+  // Header
+  html += '<div class="card">'
+  html += '<h1>Session Summary</h1>'
+  html += '<div style="color:#6b7280;font-size:14px">User: <b>' + escapeHtml(session.userLogin ?? 'unknown') + '</b> &middot; Session: <span style="font-family:monospace;font-size:12px">' + escapeHtml(session.sessionId) + '</span></div>'
+  html += '<div style="color:#6b7280;font-size:13px;margin-top:4px">' + formatTime(session.startedAt) + ' &rarr; ' + formatTime(endedAt) + '</div>'
+  html += '</div>'
+
+  // KPIs
+  html += '<div class="kpi-grid">'
+  html += '<div class="kpi-box"><div class="value">' + formatMs(kpis.total_session_time_ms) + '</div><div class="label">Total Session Time</div></div>'
+  html += '<div class="kpi-box"><div class="value">' + String(events.length) + '</div><div class="label">Events Handled</div></div>'
+
+  const resolved = events.filter(function (e) { return e.decision_time_ms !== null })
+  html += '<div class="kpi-box"><div class="value">' + resolved.length + ' / ' + events.length + '</div><div class="label">Events Resolved (with AWARD)</div></div>'
+  html += '<div class="kpi-box"><div class="value">' + formatMs(kpis.avg_decision_time_ms) + '</div><div class="label">Avg Decision Time (across all events)</div></div>'
+  html += '</div>'
+
+  // Per-event details
+  html += '<h2>Event Details</h2>'
+  for (let ei = 0; ei < events.length; ei++) {
+    const evt = events[ei]
+    const d = evt.data as Record<string, unknown> | undefined
+    const meta = (d?.metadata ?? {}) as Record<string, unknown>
+    const eventType = typeof meta.event_type === 'string' ? meta.event_type : 'Unknown'
+    const eventId = typeof meta.id_event === 'string' ? meta.id_event : String(meta.id_event ?? '')
+
+    html += '<div class="card">'
+    html += '<h3>' + stepBadge('EVENT') + ' Event #' + (ei + 1)
+    if (eventId) html += ' <span class="tag">ID: ' + escapeHtml(eventId) + '</span>'
+    html += ' <span class="tag">' + escapeHtml(eventType) + '</span>'
+    html += '</h3>'
+    html += '<div class="time">' + formatTime(evt.date) + '</div>'
+    html += eventMetadataHtml(evt.data)
+
+    // Decision time
+    if (evt.decision_time_ms !== null) {
+      html += '<div style="margin-top:8px;font-size:13px">&#9201; Decision time: <b>' + formatMs(evt.decision_time_ms) + '</b></div>'
+    } else {
+      html += '<div class="no-solution" style="margin-top:8px">No solution selected</div>'
+    }
+
+    // Timeline of interactions
+    if (evt.interactions.length > 0) {
+      html += '<div style="margin-top:10px;font-size:13px;color:#6b7280;font-weight:600">Interactions</div>'
+      html += '<div class="timeline">'
+      for (let ii = 0; ii < evt.interactions.length; ii++) {
+        const inter = evt.interactions[ii]
+        const cls = inter.step === 'ASKFORHELP' ? 'ask' : inter.step === 'FEEDBACK' ? 'feedback' : inter.step === 'AWARD' ? 'award' : ''
+        html += '<div class="tl-item ' + cls + '">'
+        html += stepBadge(inter.step) + ' <span class="time">' + formatTime(inter.date) + '</span>'
+        if (inter.step === 'FEEDBACK') {
+          html += '<div style="margin-top:2px;font-size:13px">' + feedbackLabel(inter.data) + '</div>'
+        } else if (inter.step === 'AWARD') {
+          html += awardHtml(inter)
+        }
+        html += '</div>'
+      }
+      html += '</div>'
+    }
+
+    html += '</div>'
+  }
+
+  html += '</body></html>'
+  return html
+}
+
 function download(content: string, mimeType: string, fileName: string) {
   const blob = new Blob([content], { type: mimeType })
   const url = URL.createObjectURL(blob)
