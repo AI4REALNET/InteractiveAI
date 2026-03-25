@@ -387,7 +387,7 @@ function download(content: string, mimeType: string, fileName: string) {
   URL.revokeObjectURL(url)
 }
 
-function sessionFileName(session: TraceSession, extension: 'json' | 'csv') {
+function sessionFileName(session: TraceSession, extension: 'json' | 'csv' | 'html') {
   const started = session.startedAt.replace(/:/g, '-').replace('.', '-')
   const user = session.userLogin ?? 'unknown'
   return `historic-session-${user}-${started}.${extension}`
@@ -463,6 +463,20 @@ export function exportTraceSession(format: ExportFormat = 'json', options: Expor
     2
   )
   download(json, 'application/json;charset=utf-8', sessionFileName(session, 'json'))
+
+  // Open HTML summary in a new tab (use <a target="_blank"> to avoid popup blocker)
+  const summaryHtml = buildHtmlSummary(session, endedAt, structured, kpis)
+  const summaryBlob = new Blob([summaryHtml], { type: 'text/html;charset=utf-8' })
+  const summaryUrl = URL.createObjectURL(summaryBlob)
+  const summaryAnchor = document.createElement('a')
+  summaryAnchor.href = summaryUrl
+  summaryAnchor.target = '_blank'
+  summaryAnchor.rel = 'noopener'
+  document.body.appendChild(summaryAnchor)
+  summaryAnchor.click()
+  summaryAnchor.remove()
+  // Also download the HTML file as a backup
+  download(summaryHtml, 'text/html;charset=utf-8', sessionFileName(session, 'html'))
 }
 
 export function clearTraceSession() {
