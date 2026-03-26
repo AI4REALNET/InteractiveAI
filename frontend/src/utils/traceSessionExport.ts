@@ -105,6 +105,12 @@ function computeDecisionTime(interactions: StoredTrace[]): number | null {
   return new Date(awardDate).getTime() - new Date(askDate).getTime()
 }
 
+/** Map legacy event_type values to human-readable labels for export. */
+function normalizeEventType(eventType: string): string {
+  if (eventType === 'KPI') return 'Overload'
+  return eventType
+}
+
 function buildStructuredTraces(flat: StoredTrace[]): StructuredTrace[] {
   // Index: card_id → structured event entry
   const eventByCardId: Record<string, StructuredEvent> = {}
@@ -356,7 +362,7 @@ function buildHtmlSummary(
     const evt = events[ei]
     const d = evt.data as Record<string, unknown> | undefined
     const meta = (d?.metadata ?? {}) as Record<string, unknown>
-    const eventType = typeof meta.event_type === 'string' ? meta.event_type : 'Unknown'
+    const eventType = typeof meta.event_type === 'string' ? normalizeEventType(meta.event_type) : 'Unknown'
     const eventId = typeof meta.id_event === 'string' ? meta.id_event : String(meta.id_event ?? '')
     const eventTitle = typeof d?.title === 'string' ? d.title : ''
     const eventSummary = typeof d?.summary === 'string' ? d.summary : ''
@@ -476,6 +482,18 @@ export function exportTraceSession(format: ExportFormat = 'json', options: Expor
   }
 
   const structured = buildStructuredTraces(session.traces)
+
+  // Normalize event_type in metadata for JSON export (e.g. 'KPI' → 'Overload')
+  for (let i = 0; i < structured.length; i++) {
+    const t = structured[i]
+    if (t.step === 'EVENT') {
+      const d = t.data as Record<string, unknown> | undefined
+      const meta = d?.metadata as Record<string, unknown> | undefined
+      if (meta && typeof meta.event_type === 'string') {
+        meta.event_type = normalizeEventType(meta.event_type)
+      }
+    }
+  }
 
   // --- Session-level KPIs ---
   const totalSessionTimeMs = new Date(endedAt).getTime() - new Date(session.startedAt).getTime()
