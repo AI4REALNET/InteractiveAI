@@ -160,5 +160,13 @@ export const useCardsStore = defineStore('cards', () => {
     cardsApi.remove(card.id)
   }
 
-  return { _cards, cards, subscribe, unsubscribe, acknowledge, remove }
+  /** Set the card's criticality to 'ND' (resolved) after the user confirms a recommendation. */
+  function resolveCriticality<E extends Entity = Entity>(card: Card<E>) {
+    if (card.data.criticality !== 'ND') {
+      card.data.criticality = 'ND'
+      eventBus.emit('notifications:ended', card)
+    }
+  }
+
+  return { _cards, cards, subscribe, unsubscribe, acknowledge, remove, resolveCriticality }
 })

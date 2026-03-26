@@ -75,6 +75,7 @@ import Event from '@/components/organisms/CAB/Assistant/Event.vue'
 import Recommendations from '@/components/organisms/CAB/Assistant/Recommendations.vue'
 import { applyRecommendation } from '@/entities/PowerGrid/api'
 import { useAppStore } from '@/stores/app'
+import { useCardsStore } from '@/stores/cards'
 import { useServicesStore } from '@/stores/services'
 import type { Entity } from '@/types/entities'
 import type { Recommendation } from '@/types/services'
@@ -82,6 +83,7 @@ import type { Recommendation } from '@/types/services'
 const route = useRoute()
 const servicesStore = useServicesStore()
 const appStore = useAppStore()
+const cardsStore = useCardsStore()
 
 const recommendations = ref<Recommendation<'PowerGrid'>[]>([])
 
@@ -111,6 +113,8 @@ function onSelection(selected: any) {
     step: 'AWARD'
   })
   applyRecommendation(selected.actions[0])
+  const activeCard = appStore.card('PowerGrid')
+  if (activeCard) cardsStore.resolveCriticality(activeCard)
   appStore.tab.assistant = 0
 }
 
