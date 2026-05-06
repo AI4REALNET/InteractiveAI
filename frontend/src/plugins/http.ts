@@ -43,6 +43,9 @@ http.interceptors.response.use(
   async function (error: AxiosError<any, any>) {
     const authStore = useAuthStore()
     const appStore = useAppStore()
+    // TODO: TEMP HACK (eval-demo) — MUST BE REMOVED before next release
+    // Auto-logout on token expiry is fully disabled. Users stay logged in even when the token expires.
+    // This was done to avoid interruptions during the demo. Re-enable the block below when done.
     // [DISABLED] Auto-logout on expired token — commented out to stay logged in despite failed requests
     // If request failed, check if token is expired
     // if (error.config?.url !== '/auth/check_token' && authStore.token?.access_token) {
