@@ -71,8 +71,16 @@ export const useCardsStore = defineStore('cards', () => {
       switch (cardEvent.type) {
         case CardOperationType.ADD:
         case CardOperationType.UPDATE:
+          // eslint-disable-next-line no-case-declarations
+          let hydratedCard: Card<Entity> | undefined = undefined
+          if (hydrated) {
+            const { data } = await cardsApi.get(cardEvent.card.id)
+            hydratedCard = data.card
+          }
           if (cardEvent.type === CardOperationType.ADD || existingCard === -1) {
             try {
+              // Use hydrated card for title/summary if available (SSE notification may not include titleTranslated)
+              const fullCard = hydratedCard ?? cardEvent.card
               recordTraceForSession({
                 use_case: entity,
                 step: 'EVENT',
@@ -80,19 +88,16 @@ export const useCardsStore = defineStore('cards', () => {
                   card_id: cardEvent.card.id,
                   process_instance_id: cardEvent.card.processInstanceId,
                   start_date: new Date(cardEvent.card.startDate).toISOString(),
-                  metadata: cardEvent.card.data.metadata
+                  publish_date: new Date(cardEvent.card.publishDate).toISOString(),
+                  title: fullCard.titleTranslated || fullCard.title?.parameters?.title || '',
+                  summary: fullCard.summaryTranslated || fullCard.summary?.parameters?.summary || '',
+                  metadata: (hydratedCard ?? cardEvent.card).data.metadata
                 },
                 date: new Date().toISOString()
               })
             } catch (error) {
               console.warn('Unable to record EVENT trace for session export:', error)
             }
-          }
-          // eslint-disable-next-line no-case-declarations
-          let hydratedCard: Card<Entity> | undefined = undefined
-          if (hydrated) {
-            const { data } = await cardsApi.get(cardEvent.card.id)
-            hydratedCard = data.card
           }
           if (existingCard !== -1) {
             if (
@@ -155,5 +160,13 @@ export const useCardsStore = defineStore('cards', () => {
     cardsApi.remove(card.id)
   }
 
-  return { _cards, cards, subscribe, unsubscribe, acknowledge, remove }
+  /** Set the card's criticality to 'ND' (resolved) after the user confirms a recommendation. */
+  function resolveCriticality<E extends Entity = Entity>(card: Card<E>) {
+    if (card.data.criticality !== 'ND') {
+      card.data.criticality = 'ND'
+      eventBus.emit('notifications:ended', card)
+    }
+  }
+
+  return { _cards, cards, subscribe, unsubscribe, acknowledge, remove, resolveCriticality }
 })

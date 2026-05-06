@@ -175,6 +175,8 @@ function onSelection(recommendation: any) {
     ...recommendation.actions[0],
     event_id: getRootCard(appStore.card('Railway')!).processInstanceId
   })
+  const activeCard = appStore.card('Railway')
+  if (activeCard) cardsStore.resolveCriticality(activeCard)
   appStore.tab.assistant = 0
 }
 
